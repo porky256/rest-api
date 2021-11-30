@@ -64,20 +64,33 @@ func (db *DatabasePostgres) GetAllBooks(filter map[string][]string) ([]models.Bo
 
 	list := []models.Book{}
 	var rows *sql.Rows
+	var query string
+	var queryinfo []interface{}
 	if len(filter) > 0 {
-		query := "select * from books where genre=$1 amount>0 order by id desc;"
-		genre, err := strconv.Atoi(filter["genre"][0])
-		if err != nil {
-			return list, err
-		}
-		rows, err = tx.Query(query, genre)
-		if err != nil {
-			return list, err
+		_, hasName := filter["name"]
+		_, hasGenre := filter["genre"]
+		if hasName && hasGenre {
+			query = "select * from books where genre=$1 and name=$2 and amount>0 order by id desc;"
+			genre, err := strconv.Atoi(filter["genre"][0])
+			if err != nil {
+				return list, err
+			}
+			queryinfo = append(queryinfo, genre, filter["name"][0])
+		} else if hasName {
+			query = "select * from books where name=$1 and amount>0 order by id desc;"
+			queryinfo = append(queryinfo, filter["name"][0])
+		} else if hasGenre {
+			query = "select * from books where genre=$1 and amount>0 order by id desc;"
+			genre, err := strconv.Atoi(filter["genre"][0])
+			if err != nil {
+				return list, err
+			}
+			queryinfo = append(queryinfo, genre)
 		}
 	} else {
-		query := "select * from books where amount>0 order by id desc;"
-		rows, err = tx.Query(query)
+		query = "select * from books where amount>0 order by id desc;"
 	}
+	rows, err = tx.Query(query, queryinfo...)
 	if err != nil {
 		return list, err
 	}
@@ -188,7 +201,7 @@ func (db *DatabasePostgres) GetBookById(id int) (models.Book, error) {
 		case nil:
 			err = tx.Commit()
 		default:
-			tx.Rollback()
+			err = tx.Rollback()
 		}
 	}()
 

@@ -348,8 +348,26 @@ func TestAPIGet(t *testing.T) {
 			expectedResponseBody: `[{"id":1,"name":"OK","price":1,"genre":1,"amount":1},{"id":1,"name":"OK2","price":1,"genre":2,"amount":1}]`,
 		},
 		{
-			name:            "OK with filter",
+			name:            "OK with genre filter",
 			filterCondition: map[string][]string{"genre": {"1"}},
+			mockBehavior: func(r *MockDatabase, filterCondition map[string][]string) {
+				r.EXPECT().GetAllBooks(filterCondition).Return([]models.Book{{ID: 1, Name: "OK", Price: 1, Genre: 1, Amount: 1}}, nil)
+			},
+			expectedStatusCode:   http.StatusOK,
+			expectedResponseBody: `[{"id":1,"name":"OK","price":1,"genre":1,"amount":1}]`,
+		},
+		{
+			name:            "OK with name filter",
+			filterCondition: map[string][]string{"name": {"OK"}},
+			mockBehavior: func(r *MockDatabase, filterCondition map[string][]string) {
+				r.EXPECT().GetAllBooks(filterCondition).Return([]models.Book{{ID: 1, Name: "OK", Price: 1, Genre: 1, Amount: 1}}, nil)
+			},
+			expectedStatusCode:   http.StatusOK,
+			expectedResponseBody: `[{"id":1,"name":"OK","price":1,"genre":1,"amount":1}]`,
+		},
+		{
+			name:            "OK with both filter",
+			filterCondition: map[string][]string{"name": {"OK"}, "genre": {"1"}},
 			mockBehavior: func(r *MockDatabase, filterCondition map[string][]string) {
 				r.EXPECT().GetAllBooks(filterCondition).Return([]models.Book{{ID: 1, Name: "OK", Price: 1, Genre: 1, Amount: 1}}, nil)
 			},
@@ -359,6 +377,13 @@ func TestAPIGet(t *testing.T) {
 		{
 			name:                 "invalid filter",
 			filterCondition:      map[string][]string{"genre": {"some invalid info"}},
+			mockBehavior:         func(r *MockDatabase, filterCondition map[string][]string) {},
+			expectedStatusCode:   http.StatusBadRequest,
+			expectedResponseBody: `{"error":"invalid filter condition"}`,
+		},
+		{
+			name:                 "another invalid filter",
+			filterCondition:      map[string][]string{"some_filter_name": {"1"}},
 			mockBehavior:         func(r *MockDatabase, filterCondition map[string][]string) {},
 			expectedStatusCode:   http.StatusBadRequest,
 			expectedResponseBody: `{"error":"invalid filter condition"}`,

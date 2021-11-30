@@ -38,14 +38,35 @@ func InitializeHandler(database db.Database) Handler {
 func (handler *Handler) getBooks(c *gin.Context) {
 	filter := c.Request.URL.Query()
 	if len(filter) != 0 {
-		if !filter.Has("genre") {
+		switch len(filter) {
+		case 1:
+			if filter.Has("genre") {
+				genre, err := strconv.Atoi(filter.Get("genre"))
+				if err != nil || genre < 1 || genre > 3 {
+					log.Println(err.Error())
+					c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{"invalid filter condition"})
+					return
+				}
+			} else if !filter.Has("name") {
+				log.Println("invalid filter condition")
+				c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{"invalid filter condition"})
+				return
+			}
+		case 2:
+			if !filter.Has("genre") || !filter.Has("name") {
+				log.Println("invalid filter condition")
+				c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{"invalid filter condition"})
+				return
+			}
+			genre, err := strconv.Atoi(filter.Get("genre"))
+			if err != nil || genre < 1 || genre > 3 {
+				log.Println(err.Error())
+				c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{"invalid filter condition"})
+				return
+			}
+
+		default:
 			log.Println("invalid filter condition")
-			c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{"invalid filter condition"})
-			return
-		}
-		genre, err := strconv.Atoi(filter.Get("genre"))
-		if err != nil || genre < 1 || genre > 3 {
-			log.Println(err.Error())
 			c.AbortWithStatusJSON(http.StatusBadRequest, ErrorMessage{"invalid filter condition"})
 			return
 		}

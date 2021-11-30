@@ -19,6 +19,7 @@ func main() {
 		os.Getenv("POSTGRES_DB")
 	dataBase, err := db.Initialize(dbUser, dbPassword, dbName)
 
+	//	dataBase, err := db.Initialize("postgres", "2341", "books")
 	if err != nil {
 		log.Fatalln(err)
 		return
